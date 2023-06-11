@@ -17,6 +17,7 @@ import java.util.Set;
 public class PacienteEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_paciente", nullable = false)
     private Long idPaciente;
 
