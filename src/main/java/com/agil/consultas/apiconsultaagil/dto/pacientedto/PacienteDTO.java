@@ -11,7 +11,7 @@ import org.springframework.beans.BeanUtils;
 @Data
 public class PacienteDTO {
 
-    private Long idCliente;
+    private Long idPaciente;
 
     private String nome;
 
