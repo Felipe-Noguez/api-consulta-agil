@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @Validated
 @RequiredArgsConstructor
 @RestController
@@ -19,8 +21,8 @@ public class PacienteController {
 
     private final PacienteService pacienteService;
 
-    @PostMapping("/cadastrar")
-    public ResponseEntity<PacienteDTO> cadastrarPaciente(PacienteCreateDTO pacienteCreateDTO) throws RegraDeNegocioException {
+    @PostMapping("/cadastrar-paciente")
+    public ResponseEntity<PacienteDTO> cadastrarPaciente(@Valid @RequestBody PacienteCreateDTO pacienteCreateDTO) throws RegraDeNegocioException {
         return new ResponseEntity<>(pacienteService.cadastrarPaciente(pacienteCreateDTO), HttpStatus.CREATED);
     }
 
