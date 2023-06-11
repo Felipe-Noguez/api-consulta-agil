@@ -19,11 +19,12 @@ import javax.persistence.*;
 public class PacienteConsultaPK {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_paciente_consulta")
     private Long idPacienteConsulta;
 
     @JsonIgnore
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_paciente")
     private PacienteEntity pacienteEntity;
 
