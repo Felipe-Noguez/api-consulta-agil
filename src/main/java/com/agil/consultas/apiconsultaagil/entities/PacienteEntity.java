@@ -17,8 +17,8 @@ import java.util.Set;
 public class PacienteEntity {
 
     @Id
-    @Column(name = "id_cliente", nullable = false)
-    private Long idCliente;
+    @Column(name = "id_paciente", nullable = false)
+    private Long idPaciente;
 
     @Column(name = "nome")
     private String nome;
