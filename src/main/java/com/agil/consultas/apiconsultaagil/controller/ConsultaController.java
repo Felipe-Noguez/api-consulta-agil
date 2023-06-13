@@ -1,5 +1,6 @@
 package com.agil.consultas.apiconsultaagil.controller;
 
+import com.agil.consultas.apiconsultaagil.controller.doc.ConsultaDocController;
 import com.agil.consultas.apiconsultaagil.dto.PageDTO;
 import com.agil.consultas.apiconsultaagil.dto.consultadto.ConsultaCreateDTO;
 import com.agil.consultas.apiconsultaagil.dto.consultadto.ConsultaDTO;
@@ -18,7 +19,7 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/consulta")
-public class ConsultaController {
+public class ConsultaController implements ConsultaDocController {
 
     private final ConsultaService consultaService;
 
@@ -31,6 +32,12 @@ public class ConsultaController {
     public ResponseEntity<PageDTO<ConsultaPacienteDTO>> listarConsultas(@RequestParam(defaultValue = "0") Integer page,
                                                                         @RequestParam(defaultValue = "10") Integer size) throws RegraDeNegocioException {
         return new ResponseEntity<>(consultaService.listarConsultas(page, size), HttpStatus.OK);
+    }
+
+    @PutMapping("/atualizar-consulta")
+    public ResponseEntity<ConsultaDTO> atualizarConsulta(@Valid @RequestBody ConsultaCreateDTO consultaCreateDTO,
+                                                         @RequestParam Long idConsulta) throws RegraDeNegocioException {
+        return new ResponseEntity<>(consultaService.atualizarConsulta(idConsulta, consultaCreateDTO), HttpStatus.CREATED);
     }
 
     @DeleteMapping("/cancelar-consulta")

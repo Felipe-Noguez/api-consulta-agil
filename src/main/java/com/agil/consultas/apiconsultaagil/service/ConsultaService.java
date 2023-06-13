@@ -90,6 +90,40 @@ public class ConsultaService {
                 consultaDTO);
     }
 
+    public ConsultaDTO atualizarConsulta(Long idConsulta, ConsultaCreateDTO consultaCreateDTO) throws RegraDeNegocioException {
+        ConsultaEntity consultaAtualizar = buscarConsultaPorId(idConsulta);
+
+        if (consultaCreateDTO.getDataHoraConsulta() == null) {
+            throw new RegraDeNegocioException("Por favor, insira data e hora e tente novamente!");
+        }
+
+        Optional<ConsultaEntity> consultaExistente = consultaRepository.findByDataHoraConsulta(consultaCreateDTO.getDataHoraConsulta());
+        if (consultaExistente.isPresent() && !consultaExistente.get().getIdConsulta().equals(idConsulta)) {
+            throw new RegraDeNegocioException("Já existe uma consulta agendada para essa data e hora!");
+        }
+
+        if (!consultaAtualizar.getPacienteConsultaPK().stream()
+                .anyMatch(pk -> pk.getPacienteEntity().getIdPaciente().equals(consultaCreateDTO.getIdPaciente()))) {
+            throw new RegraDeNegocioException("Esta consulta não é deste paciente, verifique e tente novamente!");
+        }
+
+        PacienteEntity pacienteDB = pacienteService.buascarPacientePorId(consultaCreateDTO.getIdPaciente());
+
+        consultaAtualizar.setEspecialidade(consultaCreateDTO.getEspecialidade());
+        consultaAtualizar.setDataHoraConsulta(consultaCreateDTO.getDataHoraConsulta());
+
+        PacienteConsultaPK pacienteConsultaPK = new PacienteConsultaPK();
+        pacienteConsultaPK.setPacienteEntity(pacienteDB);
+        pacienteConsultaPK.setConsultaEntity(consultaAtualizar);
+
+        consultaAtualizar.getPacienteConsultaPK().add(pacienteConsultaPK);
+
+        consultaRepository.save(consultaAtualizar);
+
+        return new ConsultaDTO(consultaAtualizar);
+    }
+
+
     public ConsultaDTO cancelarConsulta(Long idConsulta) throws RegraDeNegocioException {
         ConsultaEntity consultaDB = this.buscarConsultaPorId(idConsulta);
 

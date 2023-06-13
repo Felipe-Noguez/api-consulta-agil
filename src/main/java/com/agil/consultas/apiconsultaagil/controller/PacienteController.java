@@ -1,5 +1,6 @@
 package com.agil.consultas.apiconsultaagil.controller;
 
+import com.agil.consultas.apiconsultaagil.controller.doc.PacienteDocController;
 import com.agil.consultas.apiconsultaagil.dto.PageDTO;
 import com.agil.consultas.apiconsultaagil.dto.pacientedto.PacienteCreateDTO;
 import com.agil.consultas.apiconsultaagil.dto.pacientedto.PacienteDTO;
@@ -17,7 +18,7 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/paciente")
-public class PacienteController {
+public class PacienteController implements PacienteDocController {
 
     private final PacienteService pacienteService;
 
