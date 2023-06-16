@@ -22,19 +22,28 @@ public class PacienteService {
     private final PacienteRepository pacienteRepository;
 
     public PacienteDTO cadastrarPaciente(PacienteCreateDTO pacienteCreateDTO) throws RegraDeNegocioException {
-        Optional<PacienteEntity> pacienteDB = pacienteRepository.findByTelefone(pacienteCreateDTO.getTelefone());
+        try {
+            Optional<PacienteEntity> pacienteDB = pacienteRepository.findByTelefone(pacienteCreateDTO.getTelefone());
 
-        if (pacienteDB.isPresent()) {
-            throw new RegraDeNegocioException("Paciente já cadastrado!");
+            if (pacienteDB.isPresent()) {
+                throw new RegraDeNegocioException("Paciente já cadastrado!");
+            }
+
+            PacienteEntity pacienteEntity = new PacienteEntity();
+            pacienteEntity.setNome(pacienteCreateDTO.getNome());
+            pacienteEntity.setTelefone(pacienteCreateDTO.getTelefone());
+
+            pacienteRepository.save(pacienteEntity);
+
+            return new PacienteDTO(pacienteEntity);
+        } catch (RegraDeNegocioException e) {
+            e.printStackTrace();
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Ocorreu um erro ao cadastrar o paciente.", e);
         }
 
-        PacienteEntity pacienteEntity = new PacienteEntity();
-        pacienteEntity.setNome(pacienteCreateDTO.getNome());
-        pacienteEntity.setTelefone(pacienteCreateDTO.getTelefone());
-
-        pacienteRepository.save(pacienteEntity);
-
-        return new PacienteDTO(pacienteEntity);
     }
 
     public PageDTO<PacienteDTO> listarPacientes(Integer page, Integer size) throws RegraDeNegocioException {
@@ -66,7 +75,7 @@ public class PacienteService {
 
     public PacienteEntity buascarPacientePorId(Long idPaciente) throws RegraDeNegocioException {
         return pacienteRepository.findById(idPaciente).orElseThrow(() ->
-                 new RegraDeNegocioException("Paciente não encontrado")
+                new RegraDeNegocioException("Paciente não encontrado")
         );
     }
 }

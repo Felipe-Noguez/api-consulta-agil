@@ -28,6 +28,7 @@ public class ConsultaCreateDTO {
     @Schema(description = "Data e horário da consulta", example = "25-10-2023 11:00:00")
     private LocalDateTime dataHoraConsulta;
 
+    @NotNull(message = "campo obrigatório, preencha e tente novamente")
     @Schema(description = "Id do paciente", example = "1")
     private Long idPaciente;
 }

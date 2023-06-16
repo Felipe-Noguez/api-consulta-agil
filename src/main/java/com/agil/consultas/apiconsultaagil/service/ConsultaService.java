@@ -8,15 +8,17 @@ import com.agil.consultas.apiconsultaagil.dto.pacientedto.PacienteDTO;
 import com.agil.consultas.apiconsultaagil.entities.ConsultaEntity;
 import com.agil.consultas.apiconsultaagil.entities.PacienteEntity;
 import com.agil.consultas.apiconsultaagil.entities.pk.PacienteConsultaPK;
+import com.agil.consultas.apiconsultaagil.exceptions.ConsultaAgendadaException;
+import com.agil.consultas.apiconsultaagil.exceptions.PacienteNaoAssociadoException;
 import com.agil.consultas.apiconsultaagil.exceptions.RegraDeNegocioException;
 import com.agil.consultas.apiconsultaagil.repository.ConsultaRepository;
 import com.agil.consultas.apiconsultaagil.repository.PacienteConsultaRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -30,41 +32,46 @@ public class ConsultaService {
     private final ConsultaRepository consultaRepository;
     private final PacienteConsultaRepository pacienteConsultaRepository;
     private final PacienteService pacienteService;
-    private final ObjectMapper objectMapper;
 
     public ConsultaDTO cadastrarConsulta(ConsultaCreateDTO consultaCreateDTO) throws RegraDeNegocioException {
-        Optional<ConsultaEntity> consultaDB = consultaRepository.findByDataHoraConsulta(consultaCreateDTO.getDataHoraConsulta());
 
-        if (consultaDB.isPresent()) {
-            throw new RegraDeNegocioException("Este horário já está agendado, verifique e tente novamente!");
+        try {
+            verificarDataHoraConsulta(consultaCreateDTO.getDataHoraConsulta());
+
+            if (consultaCreateDTO.getDataHoraConsulta() == null) {
+                throw new RegraDeNegocioException("Por favor, insira data e hora no formato '01-08-2023 10:15:00' e tente novamente!");
+            }
+
+            PacienteEntity pacienteDB = pacienteService.buascarPacientePorId(consultaCreateDTO.getIdPaciente());
+
+            PacienteEntity pacienteEntity = new PacienteEntity();
+            pacienteEntity.setIdPaciente(pacienteDB.getIdPaciente());
+            pacienteEntity.setNome(pacienteDB.getNome());
+            pacienteEntity.setTelefone(pacienteDB.getTelefone());
+
+            ConsultaEntity consultaEntity = new ConsultaEntity();
+            consultaEntity.setEspecialidade(consultaCreateDTO.getEspecialidade());
+            consultaEntity.setDataHoraConsulta(consultaCreateDTO.getDataHoraConsulta());
+
+            PacienteConsultaPK pacienteConsultaPK = new PacienteConsultaPK();
+            pacienteConsultaPK.setPacienteEntity(pacienteEntity);
+            pacienteConsultaPK.setConsultaEntity(consultaEntity);
+
+            Set<PacienteConsultaPK> consultas = new HashSet<>();
+            consultas.add(pacienteConsultaPK);
+            consultaEntity.setPacienteConsultaPK(consultas);
+
+            consultaRepository.save(consultaEntity);
+
+            return new ConsultaDTO(consultaEntity);
+        } catch (RegraDeNegocioException e) {
+            e.printStackTrace();
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Ocorreu um erro ao cadastrar o paciente.", e);
         }
 
-        if (consultaCreateDTO.getDataHoraConsulta() == null) {
-            throw new RegraDeNegocioException("Por favor, insira data e hora e tente novamente!");
-        }
-
-        PacienteEntity pacienteDB = pacienteService.buascarPacientePorId(consultaCreateDTO.getIdPaciente());
-
-        PacienteEntity pacienteEntity = new PacienteEntity();
-        pacienteEntity.setIdPaciente(pacienteDB.getIdPaciente());
-        pacienteEntity.setNome(pacienteDB.getNome());
-        pacienteEntity.setTelefone(pacienteDB.getTelefone());
-
-        ConsultaEntity consultaEntity = new ConsultaEntity();
-        consultaEntity.setEspecialidade(consultaCreateDTO.getEspecialidade());
-        consultaEntity.setDataHoraConsulta(consultaCreateDTO.getDataHoraConsulta());
-
-        PacienteConsultaPK pacienteConsultaPK = new PacienteConsultaPK();
-        pacienteConsultaPK.setPacienteEntity(pacienteEntity);
-        pacienteConsultaPK.setConsultaEntity(consultaEntity);
-
-        Set<PacienteConsultaPK> consultas = new HashSet<>();
-        consultas.add(pacienteConsultaPK);
-        consultaEntity.setPacienteConsultaPK(consultas);
-
-        consultaRepository.save(consultaEntity);
-
-        return new ConsultaDTO(consultaEntity);
     }
 
     public PageDTO<ConsultaPacienteDTO> listarConsultas(Integer page, Integer size) throws RegraDeNegocioException {
@@ -89,6 +96,42 @@ public class ConsultaService {
                 size,
                 consultaDTO);
     }
+
+    public ConsultaDTO atualizarConsulta(Long idConsulta, ConsultaCreateDTO consultaCreateDTO) throws RegraDeNegocioException {
+        try {
+            ConsultaEntity consultaAtualizar = buscarConsultaPorId(idConsulta);
+
+            if (consultaCreateDTO.getDataHoraConsulta() == null) {
+                throw new RegraDeNegocioException("Por favor, insira data e hora no formato '01-08-2023 10:15:00' e tente novamente!");
+            }
+
+            verificarDataHoraConsulta(consultaCreateDTO.getDataHoraConsulta());
+            verificarPertencimentoPaciente(consultaAtualizar, consultaCreateDTO.getIdPaciente());
+
+            PacienteEntity pacienteDB = pacienteService.buascarPacientePorId(consultaCreateDTO.getIdPaciente());
+
+            consultaAtualizar.setEspecialidade(consultaCreateDTO.getEspecialidade());
+            consultaAtualizar.setDataHoraConsulta(consultaCreateDTO.getDataHoraConsulta());
+
+            PacienteConsultaPK pacienteConsultaPK = new PacienteConsultaPK();
+            pacienteConsultaPK.setPacienteEntity(pacienteDB);
+            pacienteConsultaPK.setConsultaEntity(consultaAtualizar);
+
+            consultaAtualizar.getPacienteConsultaPK().add(pacienteConsultaPK);
+
+            consultaRepository.save(consultaAtualizar);
+
+            return new ConsultaDTO(consultaAtualizar);
+        } catch (RegraDeNegocioException e) {
+            e.printStackTrace();
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Ocorreu um erro ao cadastrar o paciente.", e);
+        }
+
+    }
+
 
     public ConsultaDTO cancelarConsulta(Long idConsulta) throws RegraDeNegocioException {
         ConsultaEntity consultaDB = this.buscarConsultaPorId(idConsulta);
@@ -120,6 +163,22 @@ public class ConsultaService {
         consultaPacienteDTO.setConsultaDTO(consultaDTO);
 
         return consultaPacienteDTO;
+    }
+
+    private void verificarDataHoraConsulta(LocalDateTime novaDataHora) throws ConsultaAgendadaException {
+        Optional<ConsultaEntity> consultaExistente = consultaRepository.findByDataHoraConsulta(novaDataHora);
+        if (consultaExistente.isPresent()) {
+            throw new ConsultaAgendadaException();
+        }
+    }
+
+    private void verificarPertencimentoPaciente(ConsultaEntity consulta, Long idPaciente) throws PacienteNaoAssociadoException {
+        boolean pacienteAssociado = consulta.getPacienteConsultaPK().stream()
+                .anyMatch(pk -> pk.getPacienteEntity().getIdPaciente().equals(idPaciente));
+
+        if (!pacienteAssociado) {
+            throw new PacienteNaoAssociadoException();
+        }
     }
 
 }

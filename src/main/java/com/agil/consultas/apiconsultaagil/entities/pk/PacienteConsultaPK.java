@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @AllArgsConstructor
@@ -32,4 +33,23 @@ public class PacienteConsultaPK {
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "id_consulta")
     private ConsultaEntity consultaEntity;
+
+//    Adicionado equals e hashcode para evitar a duplicação de registros na tabela intermediária
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof PacienteConsultaPK)) {
+            return false;
+        }
+        PacienteConsultaPK that = (PacienteConsultaPK) o;
+        return Objects.equals(getPacienteEntity().getIdPaciente(), that.getPacienteEntity().getIdPaciente())
+                && Objects.equals(getConsultaEntity().getIdConsulta(), that.getConsultaEntity().getIdConsulta());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getPacienteEntity().getIdPaciente(), getConsultaEntity().getIdConsulta());
+    }
 }

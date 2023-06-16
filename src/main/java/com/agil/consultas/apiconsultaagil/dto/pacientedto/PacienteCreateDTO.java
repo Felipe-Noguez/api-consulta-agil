@@ -18,6 +18,8 @@ public class PacienteCreateDTO {
     @Schema(description = "Nome do paciente para o cadastro", example = "Mike")
     private String nome;
 
+    @NotBlank(message = "campo obrigatório, preencha e tente novamente")
+    @NotNull(message = "campo obrigatório, preencha e tente novamente")
     @Schema(description = "Telefone do paciente para o cadastro", example = "(51) 99999-1234")
     private String telefone;
 }
