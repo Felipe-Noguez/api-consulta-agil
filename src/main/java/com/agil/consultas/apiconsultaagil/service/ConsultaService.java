@@ -105,7 +105,7 @@ public class ConsultaService {
                 throw new RegraDeNegocioException("Por favor, insira data e hora no formato '01-08-2023 10:15:00' e tente novamente!");
             }
 
-            verificarDataHoraConsulta(consultaCreateDTO.getDataHoraConsulta());
+//            verificarDataHoraConsulta(consultaCreateDTO.getDataHoraConsulta());
             verificarPertencimentoPaciente(consultaAtualizar, consultaCreateDTO.getIdPaciente());
 
             PacienteEntity pacienteDB = pacienteService.buascarPacientePorId(consultaCreateDTO.getIdPaciente());
